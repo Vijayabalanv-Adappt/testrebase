@@ -1,0 +1,351 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environmentName": {
+      "defaultValue": "t",
+      "allowedValues": [
+        "t",
+        "p"
+      ],
+      "type": "String",
+      "metadata": {
+        "description": "The type of environment to create."
+      }
+    },
+    "appserviceSKUName": {
+      "defaultValue": "B1",
+      "allowedValues": [
+        "F1",
+        "D1",
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3",
+        "P1",
+        "P2",
+        "P3",
+        "P4"
+      ],
+      "type": "String",
+      "metadata": {
+        "description": "Describes plan's pricing tier and instance size. Check details at https://azure.microsoft.com/en-us/pricing/details/app-service/"
+      }
+    },
+    "appserviceSKUCapacity": {
+      "defaultValue": 1,
+      "minValue": 1,
+      "type": "Int",
+      "metadata": {
+        "description": "Describes plan's instance count"
+      }
+    },
+    "appInsightName": {
+      "type": "string",
+      "metadata": {
+        "description": "App insight name"
+      }
+    },
+    "administratorLogin": {
+      "type": "String",
+      "metadata": {
+        "description": "The admin user of the SQL Server"
+      }
+    },
+    "administratorLoginPassword": {
+      "type": "SecureString",
+      "metadata": {
+        "description": "The password of the admin user of the SQL Server"
+      }
+    },
+    "databaseName": {
+      "type": "String",
+      "metadata": {
+        "description": "The name of the new database to create."
+      }
+    },
+    "collation": {
+      "defaultValue": "SQL_Latin1_General_CP1_CI_AS",
+      "type": "String",
+      "metadata": {
+        "description": "The database collation for governing the proper use of characters."
+      }
+    },
+    "edition": {
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Basic",
+        "Standard",
+        "Premium"
+      ],
+      "type": "String",
+      "metadata": {
+        "description": "The type of database to create."
+      }
+    },
+    "maxSizeBytes": {
+      "defaultValue": "1073741824",
+      "type": "String",
+      "metadata": {
+        "description": "The maximum size, in bytes, for the database"
+      }
+    },
+    "requestedServiceObjectiveName": {
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Basic",
+        "S0",
+        "S1",
+        "S2",
+        "P1",
+        "P2",
+        "P3"
+      ],
+      "type": "String",
+      "metadata": {
+        "description": "Describes the performance level for Edition"
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_ZRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "description": "Storage Account type"
+      }
+    },
+    /*     "websiteCustomDomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "Custom Domain Name"
+      }
+    }, */
+    "location": {
+      "defaultValue": "[resourceGroup().location]",
+      "type": "String",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "hostingplan": "[concat('hostingplan', '-', parameters('environmentName'), '-', 'test')]",
+    "webapp": "[concat('webapp', '-', parameters('environmentName'), '-', 'test')]",
+    "appInsightName": "[parameters('appInsightName')]",
+    "sqlserverName": "[concat('sqlserver', '-', parameters('environmentName'), '-', 'test')]",
+    "storage": "[concat('storage', parameters('environmentName'), 'test')]",
+    "container": "test"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2014-04-01",
+      "name": "[variables('sqlserverName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "SqlServer"
+      },
+      "properties": {
+        "administratorLogin": "[parameters('administratorLogin')]",
+        "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
+        "version": "12.0"
+      },
+      "resources": [
+        {
+          "type": "databases",
+          "apiVersion": "2014-04-01",
+          "name": "[parameters('databaseName')]",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[concat('Microsoft.Sql/servers/', variables('sqlserverName'))]"
+          ],
+          "tags": {
+            "displayName": "Database"
+          },
+          "properties": {
+            "edition": "[parameters('edition')]",
+            "collation": "[parameters('collation')]",
+            "maxSizeBytes": "[parameters('maxSizeBytes')]",
+            "requestedServiceObjectiveName": "[parameters('requestedServiceObjectiveName')]"
+          }
+        },
+        {
+          "type": "firewallrules",
+          "apiVersion": "2014-04-01",
+          "name": "AllowAllWindowsAzureIps",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[concat('Microsoft.Sql/servers/', variables('sqlserverName'))]"
+          ],
+          "properties": {
+            "endIpAddress": "0.0.0.0",
+            "startIpAddress": "0.0.0.0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2015-08-01",
+      "name": "[variables('hostingplan')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "HostingPlan"
+      },
+      "sku": {
+        "name": "[parameters('appserviceSKUName')]",
+        "capacity": "[parameters('appserviceSKUCapacity')]"
+      },
+      "properties": {
+        "name": "[variables('hostingplan')]"
+      }
+    },
+    {
+      "name": "[variables('appInsightName')]",
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02-preview",
+      "location": "[parameters('location')]",
+      "tags": {},
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web",
+        "DisableIpMasking": true
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2015-08-01",
+      "name": "[variables('webapp')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Web/serverFarms/', variables('hostingplan'))]"
+      ],
+      "tags": {
+        "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('hostingplan'))]": "empty",
+        "displayName": "Website"
+      },
+      "properties": {
+        "name": "[variables('webapp')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingplan'))]",
+        "httpsOnly": true /* ,
+        "hostNameSslStates": [
+          {
+            "name": "[parameters('websiteCustomDomainName')]",
+            "sslState": "SniEnabled",
+            "hostType": "Standard"
+          }
+        ] */
+      },
+      "resources": [
+        {
+          "type": "config",
+          "apiVersion": "2016-08-01",
+          "name": "connectionstrings",
+          "dependsOn": [
+            "[concat('Microsoft.Web/Sites/', variables('webapp'))]",
+            "[concat('Microsoft.Sql/servers/', variables('sqlserverName'))]"
+          ],
+          "properties": {
+            "Default": {
+              "value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('databaseName'), ';User Id=', parameters('administratorLogin'), '@', variables('sqlserverName'), ';Password=', parameters('administratorLoginPassword'), ';')]",
+              "type": "Custom"
+            }
+          }
+        },
+        {
+          "type": "config",
+          "apiVersion": "2016-08-01",
+          "name": "appsettings",
+          "dependsOn": [
+            "[concat('Microsoft.Web/Sites/', variables('webapp'))]",
+            "[concat('Microsoft.Insights/components/', variables('appInsightName'))]"
+          ],
+          "properties": {
+            "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightName')), '2018-05-01-preview').InstrumentationKey]",
+            "ContainerName": "[variables('container')]",
+            "AzureBlobAccessKey": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storage'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storage')), '2019-06-01').keys[0].value, ';EndpointSuffix=core.windows.net')]"          }
+        },
+        {
+          "type": "Microsoft.Web/sites/config",
+          "apiVersion": "2021-01-15",
+          "name": "[concat(variables('webapp'), '/web')]",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', variables('webapp'))]"
+          ],
+          "properties": {
+            "numberOfWorkers": 1,
+            "defaultDocuments": [
+              "Default.htm",
+              "Default.html",
+              "Default.asp",
+              "index.htm",
+              "index.html",
+              "iisstart.htm",
+              "default.aspx",
+              "index.php",
+              "hostingstart.html"
+            ],
+            "netFrameworkVersion": "v6.0",
+            "metadata": [ 
+              { 
+                "name": "CURRENT_STACK",
+                "value": "dotnetcore" 
+              } 
+            ],
+            "webSocketsEnabled": true,
+            "alwaysOn": true
+          }
+        } /* ,
+        {
+          "apiVersion": "2019-08-01",
+          "location": "[parameters('location')]",
+          "name": "[parameters('websiteCustomDomainName')]",
+          "type": "Microsoft.Web/certificates",
+          "dependsOn": [
+            "[concat('Microsoft.Web/serverFarms/', variables('hostingplan'))]",
+            "[concat('Microsoft.Web/Sites/', variables('webapp'))]"
+          ],
+          "properties": {
+            "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('hostingplan'))]",
+            "canonicalName": "[parameters('websiteCustomDomainName')]",
+            "domainValidationMethod": "http-token"
+          }
+        } */
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
+      "name": "[variables('storage')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('storageAccountType')]"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "accessTier": "Hot"
+      },
+      "resources": [
+        {
+          "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+          "apiVersion": "2019-06-01",
+          "name": "[concat(variables('storage'), '/default/', variables('container'))]",
+          "dependsOn": [
+            "[variables('storage')]"
+          ],
+          "properties": {
+            "publicAccess": "None"
+          }
+        }
+      ]
+    }
+  ]
+}

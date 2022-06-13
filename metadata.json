@@ -1,0 +1,9 @@
+{
+  "$schema": "https://aka.ms/azure-quickstart-templates-metadata-schema#",
+  "type": "QuickStart",
+  "itemDisplayName": "test V2, ARM template",
+  "description": "This template creates Appservices for Web & API Applications, SQL Database and a Storage Account",
+  "summary": "test V2, ARM template",
+  "githubUsername": "Vijayabalanv-Adappt",
+  "dateUpdated": "2021-09-03"
+}

@@ -1,1 +1,1 @@
-# DevOps-infra
+template for Mysql infra setup

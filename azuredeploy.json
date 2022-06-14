@@ -121,12 +121,6 @@
         "description": "Storage Account type"
       }
     },
-    /*     "websiteCustomDomainName": {
-      "type": "string",
-      "metadata": {
-        "description": "Custom Domain Name"
-      }
-    }, */
     "location": {
       "defaultValue": "[resourceGroup().location]",
       "type": "String",
@@ -244,14 +238,7 @@
       "properties": {
         "name": "[variables('webapp')]",
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingplan'))]",
-        "httpsOnly": true /* ,
-        "hostNameSslStates": [
-          {
-            "name": "[parameters('websiteCustomDomainName')]",
-            "sslState": "SniEnabled",
-            "hostType": "Standard"
-          }
-        ] */
+        "httpsOnly": true 
       },
       "resources": [
         {
@@ -313,49 +300,9 @@
             "webSocketsEnabled": true,
             "alwaysOn": true
           }
-        } /* ,
-        {
-          "apiVersion": "2019-08-01",
-          "location": "[parameters('location')]",
-          "name": "[parameters('websiteCustomDomainName')]",
-          "type": "Microsoft.Web/certificates",
-          "dependsOn": [
-            "[concat('Microsoft.Web/serverFarms/', variables('hostingplan'))]",
-            "[concat('Microsoft.Web/Sites/', variables('webapp'))]"
-          ],
-          "properties": {
-            "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('hostingplan'))]",
-            "canonicalName": "[parameters('websiteCustomDomainName')]",
-            "domainValidationMethod": "http-token"
-          }
-        } */
+        } 
       ]
     },
-    /*{
-      "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2019-06-01",
-      "name": "[variables('storage')]",
-      "location": "[parameters('location')]",
-      "sku": {
-        "name": "[parameters('storageAccountType')]"
-      },
-      "kind": "StorageV2",
-      "properties": {
-        "accessTier": "Hot"
-      },
-      "resources": [
-        {
-          "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
-          "apiVersion": "2019-06-01",
-          "name": "[concat(variables('storage'), '/default/', variables('container'))]",
-          "dependsOn": [
-            "[variables('storage')]"
-          ],
-          "properties": {
-            "publicAccess": "None"
-          }
-        }
-      ]
-    }*/
+    
   ]
 }

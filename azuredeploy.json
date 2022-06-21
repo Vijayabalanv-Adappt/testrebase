@@ -60,52 +60,69 @@
         "description": "The password of the admin user of the SQL Server"
       }
     },
-    "databaseName": {
-      "type": "String",
+    "SkuTier": {
+      "type": "string",
+      "defaultValue": "Burstable",
+      "allowedValues": [
+        "GeneralPurpose",
+        "MemoryOptimized",
+        "Burstable"
+      ],
       "metadata": {
-        "description": "The name of the new database to create."
+        "description": "Azure database for MySQL pricing tier"
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "Standard_B1s",
+      "metadata": {
+        "description": "Azure database for MySQL sku name "
+      }
+    },
+    "StorageSizeGB": {
+      "type": "int",
+      "defaultValue": 20,
+      "metadata": {
+        "description": "Azure database for MySQL storage Size "
+      }
+    },
+    "StorageIops": {
+      "type": "int",
+      "defaultValue": 360,
+      "metadata": {
+        "description": "Azure database for MySQL storage Iops"
+      }
+    },
+    "mysqlVersion": {
+      "type": "string",
+      "defaultValue": "8.0.21",
+      "allowedValues": [
+        "5.7",
+        "8.0.21"
+      ],
+      "metadata": {
+        "description": "MySQL version"
+      }
+    },
+    "backupRetentionDays": {
+      "type": "int",
+      "defaultValue": 7,
+      "metadata": {
+        "description": "MySQL Server backup retention days"
+      }
+    },
+    "geoRedundantBackup": {
+      "type": "string",
+      "defaultValue": "Disabled",
+      "metadata": {
+        "description": "Geo-Redundant Backup setting"
       }
     },
     "collation": {
-      "defaultValue": "SQL_Latin1_General_CP1_CI_AS",
+      "defaultValue": "utf8_general_ci",
       "type": "String",
       "metadata": {
         "description": "The database collation for governing the proper use of characters."
-      }
-    },
-    "edition": {
-      "defaultValue": "Basic",
-      "allowedValues": [
-        "Basic",
-        "Standard",
-        "Premium"
-      ],
-      "type": "String",
-      "metadata": {
-        "description": "The type of database to create."
-      }
-    },
-    "maxSizeBytes": {
-      "defaultValue": "1073741824",
-      "type": "String",
-      "metadata": {
-        "description": "The maximum size, in bytes, for the database"
-      }
-    },
-    "requestedServiceObjectiveName": {
-      "defaultValue": "Basic",
-      "allowedValues": [
-        "Basic",
-        "S0",
-        "S1",
-        "S2",
-        "P1",
-        "P2",
-        "P3"
-      ],
-      "type": "String",
-      "metadata": {
-        "description": "Describes the performance level for Edition"
       }
     },
     "storageAccountType": {
@@ -130,71 +147,42 @@
     }
   },
   "variables": {
-    "hostingplan": "[concat('hostingplan', '-', parameters('environmentName'), '-', 'test')]",
-    "webapp": "[concat('webapp', '-', parameters('environmentName'), '-', 'test')]",
+    "hostingplan": "[concat('hostingplan', '-', parameters('environmentName'), '-', 'ginatmp')]",
+    "webapp": "[concat('webapp', '-', parameters('environmentName'), '-', 'ginatmp')]",
     "appInsightName": "[parameters('appInsightName')]",
-    "mysqlserverName": "[concat('sqlserver', '-', parameters('environmentName'), '-', 'test')]",
-    "container": "test"
+    "sqlserverName": "[concat('sqlserver', '-', parameters('environmentName'), '-', 'ginatmp')]",
+    "storage": "[concat('storage', parameters('environmentName'), 'ginatmp')]",
+    "container": "ginatmp"
   },
   "resources": [
     {
       "type": "Microsoft.DBforMySQL/flexibleServers",
-      "apiVersion": "[variables('api')]",
-      "name": "[parameters('serverName')]",
+      "apiVersion": "2021-05-01",
+      "name": "[variables('sqlserverName')]",
       "location": "[parameters('location')]",
       "sku": {
-        "name": "Standard_D4ds_v4",
-        "tier": "[parameters('serverEdition')]"
+        "name": "[parameters('skuName')]",
+        "tier": "[parameters('SkuTier')]"
       },
-      "tags": "[parameters('tags')]",
       "properties": {
-        "version": "[parameters('version')]",
         "administratorLogin": "[parameters('administratorLogin')]",
         "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
-        "publicNetworkAccess": "[variables('publicNetworkAccess')]",
-        "DelegatedSubnetArguments": "[if(empty(parameters('vnetData')), json('null'), variables('finalVnetData'))]",
-        "haEnabled": "[parameters('haEnabled')]",
-        "storageProfile": {
-          "storageMB": "[parameters('storageSizeMB')]",
-          "backupRetentionDays": "[parameters('backupRetentionDays')]"
+        "storage": {
+          "autoGrow": "Enabled",
+          "iops": "[parameters('StorageIops')]",
+          "storageSizeGB": "[parameters('StorageSizeGB')]"
         },
-        "availabilityZone": "[parameters('availabilityZone')]"
-      }
-    },
-    {
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2019-08-01",
-      "name": "[concat('firewallRules-', copyIndex())]",
-      "dependsOn": [
-        "[concat('Microsoft.DBforMySQL/flexibleServers/', parameters('serverName'))]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "template": {
-          "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "resources": [
-            {
-              "type": "Microsoft.DBforMySQL/flexibleServers/firewallRules",
-              "name": "[concat(parameters('serverName'),'/',variables('firewallRules')[copyIndex()].name)]",
-              "apiVersion": "[variables('api')]",
-              "properties": {
-                "StartIpAddress": "[variables('firewallRules')[copyIndex()].startIPAddress]",
-                "EndIpAddress": "[variables('firewallRules')[copyIndex()].endIPAddress]"
-              }
-            }
-          ]
-        }
+        "createMode": "Default",
+        "version": "[parameters('mysqlVersion')]",
+        "backup": {
+          "backupRetentionDays": "[parameters('backupRetentionDays')]",
+          "geoRedundantBackup": "[parameters('geoRedundantBackup')]"
+        },
+        "highAvailability": {
+          "mode": "Disabled"
+        } 
+       }
       },
-      "copy": {
-        "name": "firewallRulesIterator",
-        "count": "[if(greater(length(variables('firewallRules')), 0), length(variables('firewallRules')), 1)]",
-        "mode": "Serial"
-      },
-      "condition": "[greater(length(variables('firewallRules')), 0)]"
-    }
-  ]
-},
     {
       "type": "Microsoft.Web/serverfarms",
       "apiVersion": "2015-08-01",
@@ -238,24 +226,9 @@
       "properties": {
         "name": "[variables('webapp')]",
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingplan'))]",
-        "httpsOnly": true 
+        "httpsOnly": true
       },
       "resources": [
-        {
-          "type": "config",
-          "apiVersion": "2016-08-01",
-          "name": "connectionstrings",
-          "dependsOn": [
-            "[concat('Microsoft.Web/Sites/', variables('webapp'))]",
-            "[concat('Microsoft.Sql/servers/', variables('sqlserverName'))]"
-          ],
-          "properties": {
-            "Default": {
-              "value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('databaseName'), ';User Id=', parameters('administratorLogin'), '@', variables('sqlserverName'), ';Password=', parameters('administratorLoginPassword'), ';')]",
-              "type": "Custom"
-            }
-          }
-        },
         {
           "type": "config",
           "apiVersion": "2016-08-01",
@@ -300,9 +273,34 @@
             "webSocketsEnabled": true,
             "alwaysOn": true
           }
-        } 
+        }
       ]
     },
-    
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
+      "name": "[variables('storage')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('storageAccountType')]"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "accessTier": "Hot"
+      },
+      "resources": [
+        {
+          "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+          "apiVersion": "2019-06-01",
+          "name": "[concat(variables('storage'), '/default/', variables('container'))]",
+          "dependsOn": [
+            "[variables('storage')]"
+          ],
+          "properties": {
+            "publicAccess": "None"
+          }
+        }
+      ]
+    }
   ]
 }

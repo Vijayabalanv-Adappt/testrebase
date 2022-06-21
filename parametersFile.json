@@ -1,0 +1,54 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environmentName": {
+      "value": "t"
+    },
+    "appserviceSKUName": {
+      "value": "B1"
+    },
+    "appserviceSKUCapacity": {
+      "value": 1
+    },
+    "appInsightName": {
+      "value": "gina-t-insight"
+    },
+    "administratorLogin": {
+      "value": "adapptmin"
+    },
+    "administratorLoginPassword": {
+      "value": "Secure1!@#"
+    },
+    "SkuTier": {
+      "value": "Burstable"
+    },
+    "skuName": {
+      "value": "Standard_B1s"
+    },
+    "StorageSizeGB": {
+      "value": 20
+    },
+    "StorageIops": {
+      "value": 360
+    },
+    "mysqlVersion": {
+      "value": "8.0.21"
+    },
+    "backupRetentionDays": {
+      "value": 7
+    },
+    "geoRedundantBackup": {
+      "value": "Disabled"
+    },
+    "collation": {
+      "value": "utf8_general_ci"
+    },
+    "storageAccountType": {
+      "value": "Standard_LRS"
+    },
+    "location": {
+      "value": "[resourceGroup().location]"
+    }
+  }
+}

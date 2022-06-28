@@ -151,6 +151,7 @@
     "webapp": "[concat('webapp', '-', parameters('environmentName'), '-', 'ginatmp')]",
     "appInsightName": "[parameters('appInsightName')]",
     "sqlserverName": "[concat('sqlserver', '-', parameters('environmentName'), '-', 'ginatmp')]",
+    "dbname": "ginatmp",
     "storage": "[concat('storage', parameters('environmentName'), 'ginatmp')]",
     "container": "ginatmp"
   },
@@ -182,6 +183,18 @@
           "mode": "Disabled"
         } 
        }
+      },
+      {
+        "type": "Microsoft.DBforMySQL/flexibleServers/databases",
+        "apiVersion": "2021-05-01",
+        "name": "[concatvariables('sqlserverName'), '/', variables('dbname'))]",
+        "dependsOn": [
+          "[resourceId('Microsoft.DBforMySQL/flexibleServers', variables('sqlserverName'))]"
+        ],
+        "properties": {
+          "charset": "utf8",
+          "collation": "utf8_general_ci"
+        }
       },
     {
       "type": "Microsoft.Web/serverfarms",

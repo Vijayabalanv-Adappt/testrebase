@@ -187,7 +187,7 @@
       {
         "type": "Microsoft.DBforMySQL/flexibleServers/databases",
         "apiVersion": "2021-05-01",
-        "name": "[concatvariables('sqlserverName'), '/', variables('dbname'))]",
+        "name": "[concat(variables('sqlserverName'), '/', variables('dbname'))]",
         "dependsOn": [
           "[resourceId('Microsoft.DBforMySQL/flexibleServers', variables('sqlserverName'))]"
         ],

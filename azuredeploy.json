@@ -257,7 +257,7 @@
           ],
           "properties": {
             "MySqlConnection": {
-              "value": "[concat('server=', reference(resourceId('Microsoft.DBforMySQL/flexibleServers',variables('sqlserverName'))).fullyQualifiedDomainName, ';port=3306; database=', parameters('databaseName'), ';user=', parameters('administratorLogin')';Password=', parameters('administratorLoginPassword'), ';Persist Security Info=False; Connect Timeout=300;')]",
+              "value": "[format('Database={0};Server={1};UserID={2}@{3};Password={4};Persist Security Info=False; Connect Timeout=300;', parameters('databaseName'), reference(resourceId('Microsoft.DBforMySQL/flexibleServers', variables('sqlserverName'))).fullyQualifiedDomainName, parameters('administratorLogin'), variables('sqlserverName'), parameters('administratorLoginPassword'))]",
               "type": "Custom"
             }
           }

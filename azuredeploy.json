@@ -60,6 +60,12 @@
         "description": "The password of the admin user of the SQL Server"
       }
     },
+    "databaseName": {
+      "type": "String",
+      "metadata": {
+        "description": "The name of the new database to create."
+      }
+    },
     "SkuTier": {
       "type": "string",
       "defaultValue": "Burstable",
@@ -151,7 +157,6 @@
     "webapp": "[concat('webapp', '-', parameters('environmentName'), '-', 'ginatmp')]",
     "appInsightName": "[parameters('appInsightName')]",
     "sqlserverName": "[concat('sqlserver', '-', parameters('environmentName'), '-', 'ginatmp')]",
-    "dbname": "ginatmp",
     "storage": "[concat('storage', parameters('environmentName'), 'ginatmp')]",
     "container": "ginatmp"
   },
@@ -187,7 +192,7 @@
       {
         "type": "Microsoft.DBforMySQL/flexibleServers/databases",
         "apiVersion": "2021-05-01",
-        "name": "[concat(variables('sqlserverName'), '/', variables('dbname'))]",
+        "name": "[concat(variables('sqlserverName'), '/', parameters('databaseName'))]",
         "dependsOn": [
           "[resourceId('Microsoft.DBforMySQL/flexibleServers', variables('sqlserverName'))]"
         ],
@@ -242,6 +247,21 @@
         "httpsOnly": true
       },
       "resources": [
+        {
+          "type": "config",
+          "apiVersion": "2016-08-01",
+          "name": "connectionstrings",
+          "dependsOn": [
+            "[concat('Microsoft.Web/Sites/', variables('webapp'))]",
+            "[concat('Microsoft.DBforMySQL/flexibleServers/', variables('sqlserverName'))]"
+          ],
+          "properties": {
+            "MySqlConnection": {
+              "value": "[concat('server=', reference(concat('Microsoft.DBforMySQL/flexibleServers/', variables('sqlserverName'))).fullyQualifiedDomainName, ';port=3306; database=', parameters('databaseName'), ';user=', parameters('administratorLogin')';Password=', parameters('administratorLoginPassword'), ';Persist Security Info=False; Connect Timeout=300;')]",
+              "type": "Custom"
+            }
+          }
+        },
         {
           "type": "config",
           "apiVersion": "2016-08-01",

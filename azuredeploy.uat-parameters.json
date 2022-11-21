@@ -1,0 +1,57 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "environmentName": {
+            "value": "t"
+        },
+        "appserviceSKUName": {
+            "value": "B1"
+        },
+        "appserviceSKUCapacity": {
+            "value": 1
+        },
+        "appInsightName": {
+            "value": "test-t-appinsights"
+        },
+        "administratorLogin": {
+            "value": "testmaster"
+        },
+        "administratorLoginPassword": {
+            "value": "$(LoginPassword)"
+        },
+        "databaseName": {
+            "value": "testdb"
+        },
+        "SkuTier": {
+            "value": "Burstable"
+        },
+        "skuName": {
+            "value": "Standard_B1s"
+        },
+        "StorageSizeGB": {
+            "value": 20
+        },
+        "StorageIops": {
+            "value": 360
+        },
+        "mysqlVersion": {
+            "value": "8.0.21"
+        },
+        "backupRetentionDays": {
+            "value": 7
+        },
+        "geoRedundantBackup": {
+            "value": "Disabled"
+        },
+        "collation": {
+            "value": "utf8_general_ci"
+        },
+        "storageAccountType": {
+            "value": "Standard_LRS"
+        },
+        "location": {
+            "value": "westeurope"
+        }
+    }
+}

@@ -131,6 +131,43 @@
         "description": "The database collation for governing the proper use of characters."
       }
     },
+	"redisSKUName": {
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Basic",
+        "Standard"
+      ],
+      "type": "String",
+      "metadata": {
+        "description": "The pricing tier of the new Azure Redis Cache."
+      }
+    },
+    "redisSKUFamily": {
+      "defaultValue": "C",
+      "allowedValues": [
+        "C"
+      ],
+      "type": "String",
+      "metadata": {
+        "description": "The family for the sku."
+      }
+    },
+    "redisSKUCapacity": {
+      "defaultValue": 0,
+      "allowedValues": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "type": "Int",
+      "metadata": {
+        "description": "The size of the new Azure Redis Cache instance. "
+      }
+    },	
     "storageAccountType": {
       "type": "string",
       "defaultValue": "Standard_LRS",
@@ -153,12 +190,13 @@
     }
   },
   "variables": {
-    "hostingplan": "[concat('hostingplan', '-', parameters('environmentName'), '-', 'ginatmp')]",
-    "webapp": "[concat('webapp', '-', parameters('environmentName'), '-', 'ginatmp')]",
+    "hostingplan": "[concat('hostingplan', '-', parameters('environmentName'), '-', 'test')]",
+    "webapp": "[concat('webapp', '-', parameters('environmentName'), '-', 'test')]",
     "appInsightName": "[parameters('appInsightName')]",
-    "sqlserverName": "[concat('sqlserver', '-', parameters('environmentName'), '-', 'ginatmp')]",
-    "storage": "[concat('storage', parameters('environmentName'), 'ginatmp')]",
-    "container": "ginatmp"
+    "sqlserverName": "[concat('sqlserver', '-', parameters('environmentName'), '-', 'test')]",
+	"redis": "[concat('redis', '-', parameters('environmentName'), '-', 'test')]",
+    "storage": "[concat('storage', parameters('environmentName'), 'test')]",
+    "container": "test"
   },
   "resources": [
     {
@@ -188,6 +226,18 @@
           "mode": "Disabled"
         } 
        }
+      },
+      {
+        "type": "Microsoft.DBforMySQL/flexibleServers/firewallRules",
+        "apiVersion": "2021-05-01",
+        "name": "[format('{0}/{1}', variables('sqlserverName'), 'AllowAzureIPs')]",
+        "properties": {
+          "startIpAddress": "0.0.0.0",
+          "endIpAddress": "0.0.0.0"
+        },
+        "dependsOn": [
+          "[resourceId('Microsoft.DBforMySQL/flexibleServers', variables('sqlserverName'))]"
+        ]
       },
       {
         "type": "Microsoft.DBforMySQL/flexibleServers/databases",
@@ -257,7 +307,7 @@
           ],
           "properties": {
             "MySqlConnection": {
-              "value": "[format('Database={0};Server={1};UserID={2}@{3};Password={4};Persist Security Info=False; Connect Timeout=300;', parameters('databaseName'), reference(resourceId('Microsoft.DBforMySQL/flexibleServers', variables('sqlserverName'))).fullyQualifiedDomainName, parameters('administratorLogin'), variables('sqlserverName'), parameters('administratorLoginPassword'))]",
+              "value": "[format('Database={0};Server={1};User={2};Password={4};Persist Security Info=False; Connect Timeout=300;', parameters('databaseName'), reference(resourceId('Microsoft.DBforMySQL/flexibleServers', variables('sqlserverName'))).fullyQualifiedDomainName, parameters('administratorLogin'), variables('sqlserverName'), parameters('administratorLoginPassword'))]",
               "type": "Custom"
             }
           }
@@ -308,6 +358,23 @@
           }
         }
       ]
+    },
+	{
+      "type": "Microsoft.Cache/Redis",
+      "apiVersion": "2015-08-01",
+      "name": "[variables('redis')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "cache"
+      },
+      "properties": {
+        "sku": {
+          "name": "[parameters('redisSKUName')]",
+          "family": "[parameters('redisSKUFamily')]",
+          "capacity": "[parameters('redisSKUCapacity')]"
+        }
+      }
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
